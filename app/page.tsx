@@ -35,6 +35,12 @@ export default function Home() {
     setPomodoro({ duration, isRunning: false, mode: pomodoro.mode });
   };
 
+  const changeMode = () => {
+    const newMode = pomodoro.mode === 'work' ? 'break' : 'work';
+    const duration = newMode === 'work' ? 25 * 60 : 5 * 60;
+    setPomodoro({ duration, isRunning: false, mode: newMode });
+  }
+
   const tick = () => {
     setPomodoro((prev) => {
       if (prev.isRunning && prev.duration > 0) {
@@ -96,6 +102,13 @@ export default function Home() {
             className="ml-2 rounded bg-blue-500 px-4 py-2 font-semibold text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
           >
             Reset
+          </button>
+
+          <button
+            onClick={changeMode}
+            className="ml-2 rounded bg-green-500 px-4 py-2 font-semibold text-white hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75"
+          >
+            Change Mode
           </button>
         </div>
       </div>

@@ -9,21 +9,23 @@ type Pomodoro = {
   mode: 'work' | 'break';
 }
 
-type Interval = {
-  intervalId: NodeJS.Timeout | null;
-}
-
 export default function Home() {
+  const audioContextRef = React.useRef<AudioContext | null>(null);
   const [pomodoro, setPomodoro] = useState<Pomodoro>({
     duration: 25 * 60,
-    // duration: 5, // For testing purposes, set to 5 seconds
     isRunning: false,
     mode: 'work',
   });
 
   const startPomodoro = () => {
-    setPomodoro({ ...pomodoro, isRunning: true });
+    if (Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
 
+    setPomodoro({ ...pomodoro, isRunning: true });
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
   };
 
   const stopPomodoro = () => {
@@ -60,15 +62,48 @@ export default function Home() {
 
   React.useEffect(() => {
     if (pomodoro.duration === 0) {
+      playSound();
       if (pomodoro.mode === 'work') {
         setPomodoro({ duration: 5 * 60, isRunning: false, mode: 'break' })
-        alert("Pomodoro session ended! Take a break.");
+        if (Notification.permission === 'granted') {
+          new Notification("Pomodoro session ended! Take a break.");
+        }
       } else {
         setPomodoro({ duration: 25 * 60, isRunning: false, mode: 'work' })
-        alert("Break ended! Time to work.");
+        if (Notification.permission === 'granted') {
+          new Notification("Break ended! Time to work.");
+        }
       }
     }
   }, [pomodoro.duration]);
+
+  const playSound = async () => {
+    try {
+      const audioContext = audioContextRef.current;
+      if (!audioContext) {
+        return;
+      }
+      if (audioContext.state !== 'running') {
+        await audioContext.resume();
+      }
+
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      oscillator.type = 'sine';
+      oscillator.frequency.value = 800;
+      gainNode.gain.value = 0.3;
+
+      const now = audioContext.currentTime;
+      oscillator.start(now);
+      oscillator.stop(now + 0.5);
+    } catch (error) {
+      console.error("Error playing sound:", error);
+    }
+  };
 
   return (
 
@@ -108,7 +143,7 @@ export default function Home() {
             onClick={changeMode}
             className="ml-2 rounded bg-green-500 px-4 py-2 font-semibold text-white hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75"
           >
-            Change Mode
+            Mode
           </button>
         </div>
       </div>

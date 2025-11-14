@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import React from "react";
+import { FaPlay, FaStop, FaRedo, FaSyncAlt, FaPause, FaStepForward } from "react-icons/fa";
 
 type Pomodoro = {
   duration: number;
@@ -105,46 +106,70 @@ export default function Home() {
     }
   };
 
+  const totalDuration = pomodoro.mode === 'work' ? 25 * 60 : 5 * 60;
+  const progress = pomodoro.duration / totalDuration;
+  const radius = 180;
+  const circumference = 2 * Math.PI * radius; // 半径120の円の周囲長
+  const strokeDashoffset = circumference - (progress * circumference);
+
   return (
 
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-md dark:bg-gray-900">
-        <h1 className="mb-4 text-center text-2xl font-bold text-gray-800 dark:text-white">
-          {pomodoro.mode === 'work' ? 'Work Time' : 'Break Time'}
-        </h1>
-        <div className="mb-6 text-center">
-          <span className="text-6xl font-mono text-gray-800 dark:text-white">
+      <div className="relative flex items-center justify-center">
+        <svg className="w-96 h-96 transform -rotate-90">
+          {/* 背景の円 */}
+          <circle
+            cx="192"
+            cy="192"
+            r="180"
+            stroke="currentColor"
+            strokeWidth="8"
+            fill="none"
+            className="text-gray-300 dark:text-gray-700"
+          />
+          {/* 進捗の円 */}
+          <circle
+            cx="192"
+            cy="192"
+            r="180"
+            stroke="currentColor"
+            strokeWidth="8"
+            fill="none"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            className="text-red-500 transition-all duration-1000"
+          />
+        </svg>
+        {/* 中央の時間表示 */}
+        <div className="absolute flex flex-col items-center">
+          <h1 className="mb-4 text-center text-2xl font-bold text-gray-800 dark:text-white">
+            {pomodoro.mode === 'work' ? 'Work Time' : 'Break Time'}
+          </h1>
+          <div className="mb-6 text-6xl font-mono text-gray-800 dark:text-white">
             {String(Math.floor(pomodoro.duration / 60)).padStart(2, '0')}:{String(Math.floor(pomodoro.duration % 60)).padStart(2, '0')}
-          </span>
-        </div>
-        <div className="flex justify-center">
-          <button
-            onClick={startPomodoro}
-            className="rounded bg-red-500 px-4 py-2 font-semibold text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75 disabled:opacity-50"
-            disabled={pomodoro.isRunning}
-          >
-            {pomodoro.isRunning ? 'Running...' : 'Start'}
-          </button>
-          <button
-            onClick={stopPomodoro}
-            className="ml-2 rounded bg-gray-500 px-4 py-2 font-semibold text-white hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75 disabled:opacity-50"
-            disabled={!pomodoro.isRunning}
-          >
-            Stop
-          </button>
-          <button
-            onClick={resetPomodoro}
-            className="ml-2 rounded bg-blue-500 px-4 py-2 font-semibold text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
-          >
-            Reset
-          </button>
+          </div>
+          {/* コントロールボタン */}
+          <div className="flex flex-wrap justify-center gap-2">
+            <button
+              onClick={resetPomodoro}
+              className="rounded-full p-4 bg-blue-500 font-semibold text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
+            >
+              <FaRedo size={24} />
+            </button>
+            <button
+              onClick={pomodoro.isRunning ? stopPomodoro : startPomodoro}
+              className="rounded-full bg-gray-500 p-4 text-white hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75"
+            >
+              {pomodoro.isRunning ? <FaPause size={24} /> : <FaPlay size={24} />}
+            </button>
 
-          <button
-            onClick={changeMode}
-            className="ml-2 rounded bg-green-500 px-4 py-2 font-semibold text-white hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75"
-          >
-            Mode
-          </button>
+            <button
+              onClick={changeMode}
+              className="rounded-full p-4 bg-green-500 font-semibold text-white hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75"
+            >
+              <FaStepForward size={24} />
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import React from "react";
-import { FaPlay, FaStop, FaRedo, FaSyncAlt, FaPause, FaStepForward } from "react-icons/fa";
+import CircularTimer from "./components/CircularTimer";
+import SetupView from "./components/SetupView";
 
 type Pomodoro = {
   duration: number;
@@ -16,6 +17,11 @@ export default function Home() {
     duration: 25 * 60,
     isRunning: false,
     mode: 'work',
+  });
+  const [view, setView] = useState<'setup' | 'timer'>('setup');
+  const [settings, setSettings] = useState<{ workDuration: number; breakDuration: number }>({
+    workDuration: 25,
+    breakDuration: 5
   });
 
   const startPomodoro = () => {
@@ -34,13 +40,14 @@ export default function Home() {
   };
 
   const resetPomodoro = () => {
-    const duration = pomodoro.mode === 'work' ? 25 * 60 : 5 * 60;
+    const duration = pomodoro.mode === 'work' ? settings.workDuration * 60 : settings.breakDuration * 60;
     setPomodoro({ duration, isRunning: false, mode: pomodoro.mode });
+    setView('setup');
   };
 
   const changeMode = () => {
     const newMode = pomodoro.mode === 'work' ? 'break' : 'work';
-    const duration = newMode === 'work' ? 25 * 60 : 5 * 60;
+    const duration = newMode === 'work' ? settings.workDuration * 60 : settings.breakDuration * 60;
     setPomodoro({ duration, isRunning: false, mode: newMode });
   }
 
@@ -65,12 +72,12 @@ export default function Home() {
     if (pomodoro.duration === 0) {
       playSound();
       if (pomodoro.mode === 'work') {
-        setPomodoro({ duration: 5 * 60, isRunning: false, mode: 'break' })
+        setPomodoro({ duration: settings.breakDuration * 60, isRunning: false, mode: 'break' })
         if (Notification.permission === 'granted') {
           new Notification("Pomodoro session ended! Take a break.");
         }
       } else {
-        setPomodoro({ duration: 25 * 60, isRunning: false, mode: 'work' })
+        setPomodoro({ duration: settings.workDuration * 60, isRunning: false, mode: 'work' })
         if (Notification.permission === 'granted') {
           new Notification("Break ended! Time to work.");
         }
@@ -106,72 +113,43 @@ export default function Home() {
     }
   };
 
-  const totalDuration = pomodoro.mode === 'work' ? 25 * 60 : 5 * 60;
+  
+  const totalDuration = pomodoro.mode === 'work' ? settings.workDuration * 60 : settings.breakDuration * 60;
   const progress = pomodoro.duration / totalDuration;
   const radius = 180;
   const circumference = 2 * Math.PI * radius; // 半径120の円の周囲長
   const strokeDashoffset = circumference - (progress * circumference);
 
+  const handleStart = () => {
+    setPomodoro({
+      duration: settings.workDuration * 60,
+      isRunning: false,
+      mode: 'work',
+    });
+    setView('timer');
+  }
+
   return (
 
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <div className="relative flex items-center justify-center">
-        <svg className="w-96 h-96 transform -rotate-90">
-          {/* 背景の円 */}
-          <circle
-            cx="192"
-            cy="192"
-            r="180"
-            stroke="currentColor"
-            strokeWidth="8"
-            fill="none"
-            className="text-gray-300 dark:text-gray-700"
-          />
-          {/* 進捗の円 */}
-          <circle
-            cx="192"
-            cy="192"
-            r="180"
-            stroke="currentColor"
-            strokeWidth="8"
-            fill="none"
-            strokeDasharray={circumference}
-            strokeDashoffset={strokeDashoffset}
-            className="text-red-500 transition-all duration-1000"
-          />
-        </svg>
-        {/* 中央の時間表示 */}
-        <div className="absolute flex flex-col items-center">
-          <h1 className="mb-4 text-center text-2xl font-bold text-gray-800 dark:text-white">
-            {pomodoro.mode === 'work' ? 'Work Time' : 'Break Time'}
-          </h1>
-          <div className="mb-6 text-6xl font-mono text-gray-800 dark:text-white">
-            {String(Math.floor(pomodoro.duration / 60)).padStart(2, '0')}:{String(Math.floor(pomodoro.duration % 60)).padStart(2, '0')}
-          </div>
-          {/* コントロールボタン */}
-          <div className="flex flex-wrap justify-center gap-2">
-            <button
-              onClick={resetPomodoro}
-              className="rounded-full p-4 bg-blue-500 font-semibold text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
-            >
-              <FaRedo size={24} />
-            </button>
-            <button
-              onClick={pomodoro.isRunning ? stopPomodoro : startPomodoro}
-              className="rounded-full bg-gray-500 p-4 text-white hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75"
-            >
-              {pomodoro.isRunning ? <FaPause size={24} /> : <FaPlay size={24} />}
-            </button>
-
-            <button
-              onClick={changeMode}
-              className="rounded-full p-4 bg-green-500 font-semibold text-white hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75"
-            >
-              <FaStepForward size={24} />
-            </button>
-          </div>
-        </div>
-      </div>
+      {view === 'setup' ? (
+        <SetupView
+          workDuration={settings.workDuration}
+          breakDuration={settings.breakDuration}
+          onWorkDurationChange={(val) => setSettings({ ...settings, workDuration: val })}
+          onBreakDurationChange={(val) => setSettings({ ...settings, breakDuration: val })}
+          onStart={handleStart}
+        />
+      ) : (
+        <CircularTimer
+          duration={pomodoro.duration}
+          totalDuration={totalDuration}
+          mode={pomodoro.mode}
+          isRunning={pomodoro.isRunning}
+          onStartStop={pomodoro.isRunning ? stopPomodoro : startPomodoro}
+          onReset={resetPomodoro}
+          onStepForward={changeMode}
+        />)}
     </div>
   );
 }

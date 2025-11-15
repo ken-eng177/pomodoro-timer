@@ -24,8 +24,13 @@ export default function Home() {
     breakDuration: 5
   });
 
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if (isIOS && !audioContextRef.current) {
+    audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+  }
   const startPomodoro = () => {
-    if (Notification.permission === 'default') {
+    console.log('startPomodoro called');
+    if (!isIOS && Notification.permission === 'default') {
       Notification.requestPermission();
     }
 
@@ -113,7 +118,7 @@ export default function Home() {
     }
   };
 
-  
+
   const totalDuration = pomodoro.mode === 'work' ? settings.workDuration * 60 : settings.breakDuration * 60;
   const progress = pomodoro.duration / totalDuration;
   const radius = 180;

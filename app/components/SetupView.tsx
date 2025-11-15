@@ -32,26 +32,28 @@ export default function SetupView({
             {/* 中央の設定UI */}
             <div className="absolute flex flex-col items-center gap-6">
                 <h1>PomodoroTimer</h1>
+                <div className="flex gap-8 mb-4">
+                    {/* Work Time入力 */}
+                    <div className="flex flex-col items-center">
+                        <label className="mb-2 text-lg font-semibold">Work Time</label>
+                        <input
+                            type="number"
+                            value={workDuration}
+                            onChange={(e) => onWorkDurationChange(Number(e.target.value))}
+                            className="w-18 rounded border-2 px-2 py-2 text-2xl font-bold text-center"
+                        />
+                    </div>
+                    {/* Break Time入力 */}
+                    <div className="flex flex-col items-center">
+                        <label className="mb-2 text-lg font-semibold">Break Time</label>
+                        <input
+                            type="number"
 
-                {/* Work Time入力 */}
-                <div>
-                    <label>Work Time</label>
-                    <input
-                        type="number"
-                        value={workDuration}
-                        onChange={(e) => onWorkDurationChange(Number(e.target.value))}
-                        className="ml-2 w-16 rounded border px-2 py-1"
-                    />
-                </div>
-                {/* Break Time入力 */}
-                <div>
-                    <label>Break Time</label>
-                    <input
-                        type="number"
-                        value={breakDuration}
-                        onChange={(e) => onBreakDurationChange(Number(e.target.value))}
-                        className="ml-2 w-16 rounded border px-2 py-1"
-                    />
+                            value={breakDuration}
+                            onChange={(e) => onBreakDurationChange(Number(e.target.value))}
+                            className="w-18 rounded border-2 px-2 py-2 text-2xl font-bold text-center"
+                        />
+                    </div>
                 </div>
                 {/* Startボタン */}
                 <button

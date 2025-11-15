@@ -25,7 +25,7 @@ export default function Home() {
   });
 
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  if (isIOS && !audioContextRef.current) {
+  if (!isIOS && !audioContextRef.current) {
     audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
   }
   const startPomodoro = () => {
@@ -91,6 +91,9 @@ export default function Home() {
   }, [pomodoro.duration]);
 
   const playSound = async () => {
+    if (isIOS){
+      return;
+    }
     try {
       const audioContext = audioContextRef.current;
       if (!audioContext) {

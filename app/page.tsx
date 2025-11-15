@@ -88,78 +88,97 @@ export default function Home() {
     }
   }, [pomodoro.duration]);
 
-  const playSound = async () => {
-    console.log('playSound called, isIOS:', isIOS);
-    console.log('audioContextRef.current:', audioContextRef.current);
-    if (isIOS) {
-      return;
-    }
-    try {
-      const audioContext = audioContextRef.current;
-      if (!audioContext) {
-        console.error("AudioContext is not initialized.");
+  React.useEffect(() => {
+    if (!pomodoro.isRunning) return;
+
+    const startTime = Date.now();
+    const initialDuration = pomodoro.duration;
+
+    const timer = setInterval(() => {
+      const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+      const newDuration = Math.max(0, initialDuration - elapsedSeconds);
+
+      setPomodoro((prev) => ({ ...prev, duration: newDuration }));
+      if (newDuration === 0) {
+        clearInterval(timer);
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [pomodoro.isRunning, pomodoro.mode]);
+
+    const playSound = async () => {
+      console.log('playSound called, isIOS:', isIOS);
+      console.log('audioContextRef.current:', audioContextRef.current);
+      if (isIOS) {
         return;
       }
-      console.log('audioContext.state:', audioContext.state);
-      if (audioContext.state !== 'running') {
-        await audioContext.resume();
+      try {
+        const audioContext = audioContextRef.current;
+        if (!audioContext) {
+          console.error("AudioContext is not initialized.");
+          return;
+        }
+        console.log('audioContext.state:', audioContext.state);
+        if (audioContext.state !== 'running') {
+          await audioContext.resume();
+        }
+
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.type = 'sine';
+        oscillator.frequency.value = 800;
+        gainNode.gain.value = 0.3;
+
+        const now = audioContext.currentTime;
+        oscillator.start(now);
+        oscillator.stop(now + 0.5);
+      } catch (error) {
+        console.error("Error playing sound:", error);
       }
+    };
 
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
 
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
+    const totalDuration = pomodoro.mode === 'work' ? settings.workDuration * 60 : settings.breakDuration * 60;
+    const progress = pomodoro.duration / totalDuration;
+    const radius = 180;
+    const circumference = 2 * Math.PI * radius; // 半径120の円の周囲長
+    const strokeDashoffset = circumference - (progress * circumference);
 
-      oscillator.type = 'sine';
-      oscillator.frequency.value = 800;
-      gainNode.gain.value = 0.3;
-
-      const now = audioContext.currentTime;
-      oscillator.start(now);
-      oscillator.stop(now + 0.5);
-    } catch (error) {
-      console.error("Error playing sound:", error);
+    const handleStart = () => {
+      setPomodoro({
+        duration: settings.workDuration * 60,
+        isRunning: false,
+        mode: 'work',
+      });
+      setView('timer');
     }
-  };
 
+    return (
 
-  const totalDuration = pomodoro.mode === 'work' ? settings.workDuration * 60 : settings.breakDuration * 60;
-  const progress = pomodoro.duration / totalDuration;
-  const radius = 180;
-  const circumference = 2 * Math.PI * radius; // 半径120の円の周囲長
-  const strokeDashoffset = circumference - (progress * circumference);
-
-  const handleStart = () => {
-    setPomodoro({
-      duration: settings.workDuration * 60,
-      isRunning: false,
-      mode: 'work',
-    });
-    setView('timer');
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
+        {view === 'setup' ? (
+          <SetupView
+            workDuration={settings.workDuration}
+            breakDuration={settings.breakDuration}
+            onWorkDurationChange={(val) => setSettings({ ...settings, workDuration: val })}
+            onBreakDurationChange={(val) => setSettings({ ...settings, breakDuration: val })}
+            onStart={handleStart}
+          />
+        ) : (
+          <CircularTimer
+            duration={pomodoro.duration}
+            totalDuration={totalDuration}
+            mode={pomodoro.mode}
+            isRunning={pomodoro.isRunning}
+            onStartStop={pomodoro.isRunning ? stopPomodoro : startPomodoro}
+            onReset={resetPomodoro}
+            onStepForward={changeMode}
+          />)}
+      </div>
+    );
   }
-
-  return (
-
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      {view === 'setup' ? (
-        <SetupView
-          workDuration={settings.workDuration}
-          breakDuration={settings.breakDuration}
-          onWorkDurationChange={(val) => setSettings({ ...settings, workDuration: val })}
-          onBreakDurationChange={(val) => setSettings({ ...settings, breakDuration: val })}
-          onStart={handleStart}
-        />
-      ) : (
-        <CircularTimer
-          duration={pomodoro.duration}
-          totalDuration={totalDuration}
-          mode={pomodoro.mode}
-          isRunning={pomodoro.isRunning}
-          onStartStop={pomodoro.isRunning ? stopPomodoro : startPomodoro}
-          onReset={resetPomodoro}
-          onStepForward={changeMode}
-        />)}
-    </div>
-  );
-}

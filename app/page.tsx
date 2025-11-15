@@ -24,10 +24,7 @@ export default function Home() {
     breakDuration: 5
   });
 
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  if (!isIOS && !audioContextRef.current) {
-    audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-  }
+  const isIOS = typeof window !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
   const startPomodoro = () => {
     console.log('startPomodoro called');
     if (!isIOS && Notification.permission === 'default') {
@@ -38,6 +35,7 @@ export default function Home() {
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
+
   };
 
   const stopPomodoro = () => {
@@ -91,14 +89,18 @@ export default function Home() {
   }, [pomodoro.duration]);
 
   const playSound = async () => {
-    if (isIOS){
+    console.log('playSound called, isIOS:', isIOS);
+    console.log('audioContextRef.current:', audioContextRef.current);
+    if (isIOS) {
       return;
     }
     try {
       const audioContext = audioContextRef.current;
       if (!audioContext) {
+        console.error("AudioContext is not initialized.");
         return;
       }
+      console.log('audioContext.state:', audioContext.state);
       if (audioContext.state !== 'running') {
         await audioContext.resume();
       }

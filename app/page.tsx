@@ -91,9 +91,9 @@ export default function Home() {
   }, [pomodoro.duration]);
 
   const playSound = async () => {
-    // if (isIOS){
-    //   return;
-    // }
+    if (isIOS){
+      return;
+    }
     try {
       const audioContext = audioContextRef.current;
       if (!audioContext) {

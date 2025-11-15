@@ -64,23 +64,15 @@ export default function Home() {
   };
 
   React.useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (pomodoro.isRunning) {
-      timer = setInterval(tick, 1000); // Decrease duration every minute
-    }
-    return () => clearInterval(timer);
-  }, [pomodoro.isRunning]);
-
-  React.useEffect(() => {
     if (pomodoro.duration === 0) {
       playSound();
       if (pomodoro.mode === 'work') {
-        setPomodoro({ duration: settings.breakDuration * 60, isRunning: false, mode: 'break' })
+        setPomodoro({ duration: settings.breakDuration * 60, isRunning: true, mode: 'break' })
         if (!isIOS && Notification.permission === 'granted') {
           new Notification("Pomodoro session ended! Take a break.");
         }
       } else {
-        setPomodoro({ duration: settings.workDuration * 60, isRunning: false, mode: 'work' })
+        setPomodoro({ duration: settings.workDuration * 60, isRunning: true, mode: 'work' })
         if (!isIOS && Notification.permission === 'granted') {
           new Notification("Break ended! Time to work.");
         }
@@ -107,78 +99,78 @@ export default function Home() {
     return () => clearInterval(timer);
   }, [pomodoro.isRunning, pomodoro.mode]);
 
-    const playSound = async () => {
-      console.log('playSound called, isIOS:', isIOS);
-      console.log('audioContextRef.current:', audioContextRef.current);
-      if (isIOS) {
+  const playSound = async () => {
+    console.log('playSound called, isIOS:', isIOS);
+    console.log('audioContextRef.current:', audioContextRef.current);
+    if (isIOS) {
+      return;
+    }
+    try {
+      const audioContext = audioContextRef.current;
+      if (!audioContext) {
+        console.error("AudioContext is not initialized.");
         return;
       }
-      try {
-        const audioContext = audioContextRef.current;
-        if (!audioContext) {
-          console.error("AudioContext is not initialized.");
-          return;
-        }
-        console.log('audioContext.state:', audioContext.state);
-        if (audioContext.state !== 'running') {
-          await audioContext.resume();
-        }
-
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.type = 'sine';
-        oscillator.frequency.value = 800;
-        gainNode.gain.value = 0.3;
-
-        const now = audioContext.currentTime;
-        oscillator.start(now);
-        oscillator.stop(now + 0.5);
-      } catch (error) {
-        console.error("Error playing sound:", error);
+      console.log('audioContext.state:', audioContext.state);
+      if (audioContext.state !== 'running') {
+        await audioContext.resume();
       }
-    };
 
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
 
-    const totalDuration = pomodoro.mode === 'work' ? settings.workDuration * 60 : settings.breakDuration * 60;
-    const progress = pomodoro.duration / totalDuration;
-    const radius = 180;
-    const circumference = 2 * Math.PI * radius; // 半径120の円の周囲長
-    const strokeDashoffset = circumference - (progress * circumference);
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
 
-    const handleStart = () => {
-      setPomodoro({
-        duration: settings.workDuration * 60,
-        isRunning: false,
-        mode: 'work',
-      });
-      setView('timer');
+      oscillator.type = 'sine';
+      oscillator.frequency.value = 800;
+      gainNode.gain.value = 0.3;
+
+      const now = audioContext.currentTime;
+      oscillator.start(now);
+      oscillator.stop(now + 0.5);
+    } catch (error) {
+      console.error("Error playing sound:", error);
     }
+  };
 
-    return (
 
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-        {view === 'setup' ? (
-          <SetupView
-            workDuration={settings.workDuration}
-            breakDuration={settings.breakDuration}
-            onWorkDurationChange={(val) => setSettings({ ...settings, workDuration: val })}
-            onBreakDurationChange={(val) => setSettings({ ...settings, breakDuration: val })}
-            onStart={handleStart}
-          />
-        ) : (
-          <CircularTimer
-            duration={pomodoro.duration}
-            totalDuration={totalDuration}
-            mode={pomodoro.mode}
-            isRunning={pomodoro.isRunning}
-            onStartStop={pomodoro.isRunning ? stopPomodoro : startPomodoro}
-            onReset={resetPomodoro}
-            onStepForward={changeMode}
-          />)}
-      </div>
-    );
+  const totalDuration = pomodoro.mode === 'work' ? settings.workDuration * 60 : settings.breakDuration * 60;
+  const progress = pomodoro.duration / totalDuration;
+  const radius = 180;
+  const circumference = 2 * Math.PI * radius; // 半径120の円の周囲長
+  const strokeDashoffset = circumference - (progress * circumference);
+
+  const handleStart = () => {
+    setPomodoro({
+      duration: settings.workDuration * 60,
+      isRunning: false,
+      mode: 'work',
+    });
+    setView('timer');
   }
+
+  return (
+
+    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
+      {view === 'setup' ? (
+        <SetupView
+          workDuration={settings.workDuration}
+          breakDuration={settings.breakDuration}
+          onWorkDurationChange={(val) => setSettings({ ...settings, workDuration: val })}
+          onBreakDurationChange={(val) => setSettings({ ...settings, breakDuration: val })}
+          onStart={handleStart}
+        />
+      ) : (
+        <CircularTimer
+          duration={pomodoro.duration}
+          totalDuration={totalDuration}
+          mode={pomodoro.mode}
+          isRunning={pomodoro.isRunning}
+          onStartStop={pomodoro.isRunning ? stopPomodoro : startPomodoro}
+          onReset={resetPomodoro}
+          onStepForward={changeMode}
+        />)}
+    </div>
+  );
+}

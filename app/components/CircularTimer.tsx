@@ -61,20 +61,20 @@ export default function CircularTimer({
                 <div className="flex flex-wrap justify-center gap-2">
                     <button
                         onClick={onReset}
-                        className="rounded-full p-4 bg-blue-500 font-semibold text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
+                        className="rounded-full p-4 font-semibold text-white hover:scale-120"
                     >
                         <FaStop size={24} />
                     </button>
                     <button
                         onClick={onStartStop}
-                        className="rounded-full bg-gray-500 p-4 text-white hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75"
+                        className="rounded-full p-4 font-semibold text-white hover:scale-120"
                     >
                         {isRunning ? <FaPause size={24} /> : <FaPlay size={24} />}
                     </button>
 
                     <button
                         onClick={onStepForward}
-                        className="rounded-full p-4 bg-green-500 font-semibold text-white hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75"
+                        className="rounded-full p-4 font-semibold text-white hover:scale-120"
                     >
                         <FaStepForward size={24} />
                     </button>

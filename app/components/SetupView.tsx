@@ -1,4 +1,4 @@
-import { FaPlay } from "react-icons/fa";
+import { FaAngleDown, FaAngleUp, FaPlay } from "react-icons/fa";
 
 type SetupViewProps = {
     workDuration: number;
@@ -30,37 +30,46 @@ export default function SetupView({
                 />
             </svg>
             {/* 中央の設定UI */}
-            <div className="absolute flex flex-col items-center gap-6">
+            <div className="absolute flex flex-col items-center">
                 <h1>PomodoroTimer</h1>
                 <div className="flex gap-8 mb-4">
                     {/* Work Time入力 */}
                     <div className="flex flex-col items-center">
                         <label className="mb-2 text-lg font-semibold">Work Time</label>
-                        <input
-                            type="number"
-                            value={workDuration}
-                            onChange={(e) => onWorkDurationChange(Number(e.target.value))}
-                            className="w-18 rounded border-2 px-2 py-2 text-2xl font-bold text-center"
-                        />
+                        <div className="flex flex-col items-center gap-2">
+                            <button onClick={() => onWorkDurationChange(workDuration + 1)}
+                                className="hover:scale-120">
+                                <FaAngleUp size={32} />
+                            </button>
+                            <div className="text-5xl font-bold">{workDuration}</div>
+                            <button onClick={() => onWorkDurationChange(workDuration - 1)}
+                                className="hover:scale-120">
+                                <FaAngleDown size={32} />
+                            </button>
+                        </div>
                     </div>
                     {/* Break Time入力 */}
                     <div className="flex flex-col items-center">
                         <label className="mb-2 text-lg font-semibold">Break Time</label>
-                        <input
-                            type="number"
-
-                            value={breakDuration}
-                            onChange={(e) => onBreakDurationChange(Number(e.target.value))}
-                            className="w-18 rounded border-2 px-2 py-2 text-2xl font-bold text-center"
-                        />
+                        <div className="flex flex-col items-center gap-2">
+                            <button onClick={() => onBreakDurationChange(breakDuration + 1)}
+                                className="hover:scale-120">
+                                <FaAngleUp size={32} />
+                            </button>
+                            <div className="text-5xl font-bold">{breakDuration}</div>
+                            <button onClick={() => onBreakDurationChange(breakDuration - 1)}
+                                className="hover:scale-120">
+                                <FaAngleDown size={32} />
+                            </button>
+                        </div>
                     </div>
                 </div>
                 {/* Startボタン */}
                 <button
                     onClick={onStart}
-                    className="rounded-full p-4 bg-blue-500 font-semibold text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
+                    className="rounded-full p-4 font-semibold text-white hover:scale-120"
                 >
-                    <FaPlay size={24} />
+                    <FaPlay size={32} />
                 </button>
             </div>
         </div>

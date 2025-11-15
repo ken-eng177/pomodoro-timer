@@ -78,12 +78,12 @@ export default function Home() {
       playSound();
       if (pomodoro.mode === 'work') {
         setPomodoro({ duration: settings.breakDuration * 60, isRunning: false, mode: 'break' })
-        if (Notification.permission === 'granted') {
+        if (!isIOS && Notification.permission === 'granted') {
           new Notification("Pomodoro session ended! Take a break.");
         }
       } else {
         setPomodoro({ duration: settings.workDuration * 60, isRunning: false, mode: 'work' })
-        if (Notification.permission === 'granted') {
+        if (!isIOS && Notification.permission === 'granted') {
           new Notification("Break ended! Time to work.");
         }
       }
@@ -91,9 +91,9 @@ export default function Home() {
   }, [pomodoro.duration]);
 
   const playSound = async () => {
-    if (isIOS){
-      return;
-    }
+    // if (isIOS){
+    //   return;
+    // }
     try {
       const audioContext = audioContextRef.current;
       if (!audioContext) {

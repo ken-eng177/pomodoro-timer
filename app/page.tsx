@@ -19,10 +19,12 @@ export default function Home() {
     mode: 'work',
   });
   const [view, setView] = useState<'setup' | 'timer'>('setup');
-  const [settings, setSettings] = useState<{ workDuration: number; breakDuration: number }>({
+  const [settings, setSettings] = useState<{ loop: number; workDuration: number; breakDuration: number }>({
+    loop: 2,
     workDuration: 25,
     breakDuration: 5
   });
+  const [currentLoop, setCurrentLoop] = useState<number>(0);
 
   const isIOS = typeof window !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
   const startPomodoro = () => {
@@ -54,15 +56,6 @@ export default function Home() {
     setPomodoro({ duration, isRunning: false, mode: newMode });
   }
 
-  const tick = () => {
-    setPomodoro((prev) => {
-      if (prev.isRunning && prev.duration > 0) {
-        return { ...prev, duration: prev.duration - 1 };
-      }
-      return prev;
-    });
-  };
-
   React.useEffect(() => {
     if (pomodoro.duration === 0) {
       playSound();
@@ -72,11 +65,21 @@ export default function Home() {
           new Notification("Pomodoro session ended! Take a break.");
         }
       } else {
+        const nextLoop = currentLoop + 1;
+        setCurrentLoop(nextLoop);
+        if (nextLoop >= settings.loop) {
+          resetPomodoro();
+          if (!isIOS && Notification.permission === 'granted') {
+            new Notification("All Pomodoro sessions completed! Well done.");
+          }
+          return;
+        }
         setPomodoro({ duration: settings.workDuration * 60, isRunning: true, mode: 'work' })
         if (!isIOS && Notification.permission === 'granted') {
           new Notification("Break ended! Time to work.");
         }
       }
+      
     }
   }, [pomodoro.duration]);
 
@@ -148,6 +151,7 @@ export default function Home() {
       mode: 'work',
     });
     setView('timer');
+    setCurrentLoop(0);
   }
 
   return (
@@ -155,8 +159,10 @@ export default function Home() {
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
       {view === 'setup' ? (
         <SetupView
+          loop={settings.loop}
           workDuration={settings.workDuration}
           breakDuration={settings.breakDuration}
+          onLoopChange={(val) => setSettings({ ...settings, loop: val })}
           onWorkDurationChange={(val) => setSettings({ ...settings, workDuration: val })}
           onBreakDurationChange={(val) => setSettings({ ...settings, breakDuration: val })}
           onStart={handleStart}
@@ -167,6 +173,8 @@ export default function Home() {
           totalDuration={totalDuration}
           mode={pomodoro.mode}
           isRunning={pomodoro.isRunning}
+          currentLoop={currentLoop}
+          totalLoops={settings.loop}
           onStartStop={pomodoro.isRunning ? stopPomodoro : startPomodoro}
           onReset={resetPomodoro}
           onStepForward={changeMode}

@@ -4,6 +4,8 @@ type CircularTimerProps = {
     totalDuration: number;
     mode: 'work' | 'break';
     isRunning: boolean;
+    currentLoop: number;
+    totalLoops: number;
     onStartStop: () => void;
     onReset: () => void;
     onStepForward: () => void;
@@ -14,6 +16,8 @@ export default function CircularTimer({
     totalDuration,
     mode,
     isRunning,
+    currentLoop,
+    totalLoops,
     onStartStop,
     onReset,
     onStepForward,
@@ -51,6 +55,7 @@ export default function CircularTimer({
             </svg>
             {/* 中央の時間表示 */}
             <div className="absolute flex flex-col items-center">
+                <div className='flex mb-4'>Loop {currentLoop + 1}/{totalLoops}</div>
                 <h1 className="mb-4 text-center text-2xl font-bold text-gray-800 dark:text-white">
                     {mode === 'work' ? 'Work Time' : 'Break Time'}
                 </h1>

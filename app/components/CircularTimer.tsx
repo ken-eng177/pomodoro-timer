@@ -28,7 +28,7 @@ export default function CircularTimer({
     const strokeDashoffset = circumference - (progress * circumference);
 
     return (
-        <div className="relative flex items-center justify-center">
+        <div className="relative flex items-center justify-center bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-6">
             <svg className="w-96 h-96 transform -rotate-90">
                 {/* 背景の円 */}
                 <circle
@@ -50,7 +50,7 @@ export default function CircularTimer({
                     fill="none"
                     strokeDasharray={circumference}
                     strokeDashoffset={strokeDashoffset}
-                    className="text-red-500 transition-all duration-1000"
+                    className={mode === 'work' ? 'text-pink-500 transition-all duration-1000' : 'text-teal-400 transition-all duration-1000'}
                 />
             </svg>
             {/* 中央の時間表示 */}

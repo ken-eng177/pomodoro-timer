@@ -1,4 +1,5 @@
 import { FaAngleDown, FaAngleLeft, FaAngleRight, FaAngleUp, FaPlay } from "react-icons/fa";
+import { FaCirclePlay } from "react-icons/fa6";
 
 type SetupViewProps = {
     loop: number;
@@ -20,7 +21,7 @@ export default function SetupView({
     onStart,
 }: SetupViewProps) {
     return (
-        <div className="relative flex items-center justify-center">
+        <div className="relative flex items-center justify-center bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-6">
             <svg className="w-96 h-96 transform -rotate-90">
                 {/* 背景の円 */}
                 <circle
@@ -87,7 +88,7 @@ export default function SetupView({
                     onClick={onStart}
                     className="rounded-full p-4 font-semibold text-white hover:scale-120"
                 >
-                    <FaPlay size={32} />
+                    <FaCirclePlay size={32} />
                 </button>
             </div>
         </div>

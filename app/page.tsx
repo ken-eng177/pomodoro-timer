@@ -28,7 +28,6 @@ export default function Home() {
 
   const isIOS = typeof window !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
   const startPomodoro = () => {
-    console.log('startPomodoro called');
     if (!isIOS && Notification.permission === 'default') {
       Notification.requestPermission();
     }

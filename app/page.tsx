@@ -4,6 +4,8 @@ import { useState } from "react";
 import React from "react";
 import CircularTimer from "./components/CircularTimer";
 import SetupView from "./components/SetupView";
+import { FaMoon } from "react-icons/fa6";
+import { FaSun } from "react-icons/fa";
 
 type Pomodoro = {
   duration: number;
@@ -25,8 +27,18 @@ export default function Home() {
     breakDuration: 5
   });
   const [currentLoop, setCurrentLoop] = useState<number>(0);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const toggleTheme = () => {
+    setTheme(theme === 'light' ? 'dark' : 'light');
+  }
 
   const isIOS = typeof window !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  // OSのダークモード設定を初期値として設定
+  React.useEffect(() => {
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setTheme(isDark ? 'dark' : 'light');
+  }, []);
   const startPomodoro = () => {
     if (!isIOS && Notification.permission === 'default') {
       Notification.requestPermission();
@@ -101,6 +113,20 @@ export default function Home() {
     return () => clearInterval(timer);
   }, [pomodoro.isRunning, pomodoro.mode]);
 
+  React.useEffect(() => {
+    console.log('Theme changed to:', theme);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+      console.log('Added dark class');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+      console.log('Added light class');
+    }
+    console.log('Current classes:', document.documentElement.className);
+  }, [theme]);
+
   const playSound = async () => {
     console.log('playSound called, isIOS:', isIOS);
     console.log('audioContextRef.current:', audioContextRef.current);
@@ -155,7 +181,13 @@ export default function Home() {
 
   return (
 
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
+    <div className="flex min-h-screen items-center justify-center font-sans">
+      <button
+        onClick={toggleTheme}
+        className="fixed top-4 right-4 p-3 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 hover:scale-110 transition-transform"
+      >
+        {theme === 'light' ? <FaMoon size={20} /> : <FaSun size={20} />}
+      </button>
       {view === 'setup' ? (
         <SetupView
           loop={settings.loop}

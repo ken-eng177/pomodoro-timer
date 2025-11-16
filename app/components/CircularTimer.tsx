@@ -28,7 +28,13 @@ export default function CircularTimer({
     const strokeDashoffset = circumference - (progress * circumference);
 
     return (
-        <div className="relative flex items-center justify-center bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-6">
+        <div className="relative flex items-center justify-center bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-6"
+            style={{
+                backgroundColor: 'var(--circle-bg)',
+                borderWidth: '1px',
+                borderColor: 'var(--circle-border)'
+            }
+            }>
             <svg className="w-96 h-96 transform -rotate-90">
                 {/* 背景の円 */}
                 <circle
@@ -56,30 +62,30 @@ export default function CircularTimer({
             {/* 中央の時間表示 */}
             <div className="absolute flex flex-col items-center">
                 <div className='flex mb-4'>Loop {currentLoop + 1}/{totalLoops}</div>
-                <h1 className="mb-4 text-center text-2xl font-bold text-gray-800 dark:text-white">
+                <h1 className="mb-4 text-center text-2xl font-bold">
                     {mode === 'work' ? 'Work Time' : 'Break Time'}
                 </h1>
-                <div className="mb-6 text-6xl font-mono text-gray-800 dark:text-white">
+                <div className="mb-6 text-6xl font-mono">
                     {String(Math.floor(duration / 60)).padStart(2, '0')}:{String(Math.floor(duration % 60)).padStart(2, '0')}
                 </div>
                 {/* コントロールボタン */}
                 <div className="flex flex-wrap justify-center gap-2">
                     <button
                         onClick={onReset}
-                        className="rounded-full p-4 font-semibold text-white hover:scale-120"
+                        className="rounded-full p-4 font-semibold hover:scale-120"
                     >
                         <FaStop size={24} />
                     </button>
                     <button
                         onClick={onStartStop}
-                        className="rounded-full p-4 font-semibold text-white hover:scale-120"
+                        className="rounded-full p-4 font-semibold hover:scale-120"
                     >
                         {isRunning ? <FaPause size={24} /> : <FaPlay size={24} />}
                     </button>
 
                     <button
                         onClick={onStepForward}
-                        className="rounded-full p-4 font-semibold text-white hover:scale-120"
+                        className="rounded-full p-4 font-semibold hover:scale-120"
                     >
                         <FaStepForward size={24} />
                     </button>

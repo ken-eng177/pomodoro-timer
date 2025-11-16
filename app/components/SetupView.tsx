@@ -21,7 +21,12 @@ export default function SetupView({
     onStart,
 }: SetupViewProps) {
     return (
-        <div className="relative flex items-center justify-center bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-6">
+        <div className="relative flex items-center justify-center bg-white/10 backdrop-blur-sm border border-white/20 rounded-full p-6"
+            style={{
+                backgroundColor: 'var(--circle-bg)',
+                borderWidth: '1px',
+                borderColor: 'var(--circle-border)'
+            }}  >
             <svg className="w-96 h-96 transform -rotate-90">
                 {/* 背景の円 */}
                 <circle
@@ -86,7 +91,7 @@ export default function SetupView({
                 {/* Startボタン */}
                 <button
                     onClick={onStart}
-                    className="rounded-full p-4 font-semibold text-white hover:scale-120"
+                    className="rounded-full p-4 font-semibold hover:scale-120"
                 >
                     <FaCirclePlay size={32} />
                 </button>

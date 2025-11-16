@@ -130,9 +130,6 @@ export default function Home() {
   const playSound = async () => {
     console.log('playSound called, isIOS:', isIOS);
     console.log('audioContextRef.current:', audioContextRef.current);
-    if (isIOS) {
-      return;
-    }
     try {
       const audioContext = audioContextRef.current;
       if (!audioContext) {

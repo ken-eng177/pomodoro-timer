@@ -5,13 +5,21 @@ import React from "react";
 import CircularTimer from "./components/CircularTimer";
 import SetupView from "./components/SetupView";
 import { FaMoon } from "react-icons/fa6";
-import { FaSun } from "react-icons/fa";
+import { FaCheck, FaSun } from "react-icons/fa";
+import TodoModal from "./components/TodoModal";
 
 type Pomodoro = {
   duration: number;
   isRunning: boolean;
   mode: 'work' | 'break';
-}
+};
+
+type Todo = {
+  id: string;
+  text: string;
+  completed: boolean;
+  createdAt: number;
+};
 
 export default function Home() {
   const audioContextRef = React.useRef<AudioContext | null>(null);
@@ -31,6 +39,8 @@ export default function Home() {
   const toggleTheme = () => {
     setTheme(theme === 'light' ? 'dark' : 'light');
   }
+
+  const [showTodoModal, setShowTodoModal] = useState(false);
 
   const isIOS = typeof window !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
@@ -177,7 +187,6 @@ export default function Home() {
     }
   };
 
-
   const totalDuration = pomodoro.mode === 'work' ? settings.workDuration * 60 : settings.breakDuration * 60;
 
   const handleStart = () => {
@@ -198,6 +207,12 @@ export default function Home() {
         className="fixed top-4 right-4 p-3 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 hover:scale-110 transition-transform"
       >
         {theme === 'light' ? <FaMoon size={20} /> : <FaSun size={20} />}
+      </button>
+      <button
+        onClick={() => setShowTodoModal(true)}
+        className="fixed top-16 right-4 p-3 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 hover:scale-110 transition-transform"
+      >
+        <FaCheck size={20} />
       </button>
       {view === 'setup' ? (
         <SetupView
@@ -221,6 +236,10 @@ export default function Home() {
           onReset={resetPomodoro}
           onStepForward={onStepForward}
         />)}
+      <TodoModal
+        isOpen={showTodoModal}
+        onClose={() => setShowTodoModal(false)}
+      />
     </div>
   );
 }

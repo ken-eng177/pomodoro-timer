@@ -161,10 +161,6 @@ export default function Home() {
 
 
   const totalDuration = pomodoro.mode === 'work' ? settings.workDuration * 60 : settings.breakDuration * 60;
-  const progress = pomodoro.duration / totalDuration;
-  const radius = 180;
-  const circumference = 2 * Math.PI * radius; // 半径120の円の周囲長
-  const strokeDashoffset = circumference - (progress * circumference);
 
   const handleStart = () => {
     setPomodoro({

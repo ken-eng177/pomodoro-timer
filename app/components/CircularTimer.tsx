@@ -35,7 +35,7 @@ export default function CircularTimer({
                 borderColor: 'var(--circle-border)'
             }
             }>
-            <svg className="w-96 h-96 transform -rotate-90">
+            <svg className="w-96 h-96 transform -rotate-90 scale-y-[-1]">
                 {/* 背景の円 */}
                 <circle
                     cx="192"

@@ -61,10 +61,28 @@ export default function Home() {
     setView('setup');
   };
 
-  const changeMode = () => {
-    const newMode = pomodoro.mode === 'work' ? 'break' : 'work';
-    const duration = newMode === 'work' ? settings.workDuration * 60 : settings.breakDuration * 60;
-    setPomodoro({ duration, isRunning: false, mode: newMode });
+  const onStepForward = () => {
+    if (pomodoro.mode === 'work') {
+      setPomodoro({ duration: settings.breakDuration * 60, isRunning: true, mode: 'break' })
+      if (!isIOS && Notification.permission === 'granted') {
+        new Notification("Pomodoro session ended! Take a break.");
+      }
+    } else {
+      const nextLoop = currentLoop + 1;
+      setCurrentLoop(nextLoop);
+      if (nextLoop >= settings.loop) {
+        resetPomodoro();
+        if (!isIOS && Notification.permission === 'granted') {
+          new Notification("All Pomodoro sessions completed! Well done.");
+        }
+        return;
+      }
+      setPomodoro({ duration: settings.workDuration * 60, isRunning: true, mode: 'work' })
+      if (!isIOS && Notification.permission === 'granted') {
+        new Notification("Break ended! Time to work.");
+      }
+    }
+
   }
 
   React.useEffect(() => {
@@ -90,7 +108,7 @@ export default function Home() {
           new Notification("Break ended! Time to work.");
         }
       }
-      
+
     }
   }, [pomodoro.duration]);
 
@@ -201,7 +219,7 @@ export default function Home() {
           totalLoops={settings.loop}
           onStartStop={pomodoro.isRunning ? stopPomodoro : startPomodoro}
           onReset={resetPomodoro}
-          onStepForward={changeMode}
+          onStepForward={onStepForward}
         />)}
     </div>
   );

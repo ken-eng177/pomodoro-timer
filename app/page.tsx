@@ -50,8 +50,17 @@ export default function Home() {
     setTheme(isDark ? 'dark' : 'light');
   }, []);
 
+  // 初回ロード時に通知許可をリクエスト
+  React.useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then(permission => {
+        console.log('Notification permission:', permission);
+      });
+    }
+  }, []);
+
   const startPomodoro = () => {
-    if (!isIOS && Notification.permission === 'default') {
+    if (Notification.permission === 'default') {
       Notification.requestPermission();
     }
 

@@ -1,39 +1,46 @@
 // Service Worker for Pomodoro Timer PWA
-const CACHE_NAME = 'pomodoro-v1';
+const CACHE_NAME = "pomodoro-v1";
 
 // Install
-self.addEventListener('install', (event) => {
-    console.log('Service Worker: Installing...');
-    self.skipWaiting();
+self.addEventListener("install", (event) => {
+  console.log("Service Worker: Installing...");
+  self.skipWaiting();
 });
 
 // Activate
-self.addEventListener('activate', (event) => {
-    console.log('Service Worker: Activated');
-    event.waitUntil(clients.claim());
+self.addEventListener("activate", (event) => {
+  console.log("Service Worker: Activated");
+  event.waitUntil(clients.claim());
 });
 
 // タイマー開始時のメッセージを受け取る
-self.addEventListener('message', (event) => {
-    if (event.data.type === "START_TIMER") {
-        const {duration, mode}  = event.data;
+self.addEventListener("message", (event) => {
+  if (event.data.type === "START_TIMER") {
+    const { duration, mode } = event.data;
 
-        // タイマーをリセット
-        setTimeout(() => {
-            self.registration.showNotification("Pomodoro Timer", {
-                body: mode === 'work' ? "作業終了！休憩しましょう" : "休憩終了！作業開始",
-                icon: '/icons/icon-192.png',
-                tag: 'pomodoro',
-                requireInteraction: true,
-            });
-        }, duration * 1000);
-    }
+    // タイマーをリセット
+    setTimeout(() => {
+      self.registration.showNotification("Pomodoro Timer", {
+        body:
+          mode === "work" ? "作業終了！休憩しましょう" : "休憩終了！作業開始",
+        icon: "/icons/icon-192.png",
+        tag: "pomodoro",
+        requireInteraction: true,
+      });
+    }, duration * 1000);
+  } else if (event.data.type === "END_TIMER") {
+    // タイマー停止時の処理（必要に応じて実装）
+    self.registration.showNotification("Pomodoro Timer", {
+      body: "全てのポモドーロセッションが終了しました！お疲れ様でした！",
+      icon: "/icons/icon-192.png",
+      tag: "pomodoro-complete",
+      requireInteraction: true,
+    });
+  }
 });
 
 // 通知クリック時
-self.addEventListener('notificationclick', (event) => {
-    event.notification.close();
-    event.waitUntil(
-        clients.openWindow('/')
-    );
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(clients.openWindow("/"));
 });

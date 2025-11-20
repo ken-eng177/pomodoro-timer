@@ -49,7 +49,7 @@ export default function Home() {
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     setTheme(isDark ? 'dark' : 'light');
   }, []);
-  
+
   const startPomodoro = () => {
     if (!isIOS && Notification.permission === 'default') {
       Notification.requestPermission();
@@ -58,14 +58,6 @@ export default function Home() {
     setPomodoro({ ...pomodoro, isRunning: true });
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
-
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({
-        type: 'START_TIMER',
-        duration: pomodoro.duration,
-        mode: pomodoro.mode,
-      });
     }
   };
 
@@ -82,22 +74,34 @@ export default function Home() {
   const onStepForward = () => {
     if (pomodoro.mode === 'work') {
       setPomodoro({ duration: settings.breakDuration * 60, isRunning: true, mode: 'break' })
-      if (!isIOS && Notification.permission === 'granted') {
-        new Notification("Pomodoro session ended! Take a break.");
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'START_TIMER',
+          duration: pomodoro.duration,
+          mode: pomodoro.mode,
+        });
       }
     } else {
       const nextLoop = currentLoop + 1;
       setCurrentLoop(nextLoop);
       if (nextLoop >= settings.loop) {
         resetPomodoro();
-        if (!isIOS && Notification.permission === 'granted') {
-          new Notification("All Pomodoro sessions completed! Well done.");
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: 'START_TIMER',
+            duration: pomodoro.duration,
+            mode: pomodoro.mode,
+          });
         }
         return;
       }
       setPomodoro({ duration: settings.workDuration * 60, isRunning: true, mode: 'work' })
-      if (!isIOS && Notification.permission === 'granted') {
-        new Notification("Break ended! Time to work.");
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'START_TIMER',
+          duration: pomodoro.duration,
+          mode: pomodoro.mode,
+        });
       }
     }
 
@@ -108,22 +112,32 @@ export default function Home() {
       playSound();
       if (pomodoro.mode === 'work') {
         setPomodoro({ duration: settings.breakDuration * 60, isRunning: true, mode: 'break' })
-        if (!isIOS && Notification.permission === 'granted') {
-          new Notification("Pomodoro session ended! Take a break.");
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: 'START_TIMER',
+            duration: pomodoro.duration,
+            mode: pomodoro.mode,
+          });
         }
       } else {
         const nextLoop = currentLoop + 1;
         setCurrentLoop(nextLoop);
         if (nextLoop >= settings.loop) {
           resetPomodoro();
-          if (!isIOS && Notification.permission === 'granted') {
-            new Notification("All Pomodoro sessions completed! Well done.");
+          if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({
+              type: 'END_TIMER',
+            });
           }
           return;
         }
         setPomodoro({ duration: settings.workDuration * 60, isRunning: true, mode: 'work' })
-        if (!isIOS && Notification.permission === 'granted') {
-          new Notification("Break ended! Time to work.");
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: 'START_TIMER',
+            duration: pomodoro.duration,
+            mode: pomodoro.mode,
+          });
         }
       }
 

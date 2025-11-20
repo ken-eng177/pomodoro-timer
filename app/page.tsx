@@ -72,11 +72,21 @@ export default function Home() {
 
   const stopPomodoro = () => {
     setPomodoro({ ...pomodoro, isRunning: false });
+
+    // Service Workerのタイマーも停止
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'STOP_TIMER',
+      });
+    }
   };
 
   const resetPomodoro = () => {
-    const duration = pomodoro.mode === 'work' ? settings.workDuration * 60 : settings.breakDuration * 60;
-    setPomodoro({ duration, isRunning: false, mode: pomodoro.mode });
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'STOP_TIMER',
+      });
+    }
     setView('setup');
   };
 
@@ -115,6 +125,52 @@ export default function Home() {
     }
 
   }
+
+  // Service Workerからのメッセージ受信
+  React.useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data.type === 'TIMER_COMPLETED') {
+          const completedMode = event.data.mode;
+
+          //次のモードに切り替え
+          if (completedMode === 'work') {
+            setPomodoro({ duration: settings.breakDuration * 60, isRunning: true, mode: 'break' });
+
+            if(navigator.serviceWorker.controller) {
+              navigator.serviceWorker.controller.postMessage({
+                type: 'START_TIMER',
+                duration: settings.breakDuration * 60,
+                mode: 'break',
+              });
+            }
+          } else {
+            const nextLoop = currentLoop + 1;
+            setCurrentLoop(nextLoop);
+
+            if (nextLoop >= settings.loop) {
+              resetPomodoro();
+              if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({
+                  type: 'END_TIMER',
+                });
+              }
+        } else {
+              setPomodoro({ duration: settings.workDuration * 60, isRunning: true, mode: 'work' });
+
+              if(navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({
+                  type: 'START_TIMER',
+                  duration: settings.workDuration * 60,
+                  mode: 'work',
+                });
+              }
+            }
+          }
+        }
+      });
+    }
+  }, [settings, currentLoop]);
 
   React.useEffect(() => {
     if (pomodoro.duration === 0) {

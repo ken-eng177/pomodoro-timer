@@ -49,6 +49,7 @@ export default function Home() {
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     setTheme(isDark ? 'dark' : 'light');
   }, []);
+  
   const startPomodoro = () => {
     if (!isIOS && Notification.permission === 'default') {
       Notification.requestPermission();
@@ -59,6 +60,13 @@ export default function Home() {
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
 
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'START_TIMER',
+        duration: pomodoro.duration,
+        mode: pomodoro.mode,
+      });
+    }
   };
 
   const stopPomodoro = () => {
@@ -198,6 +206,18 @@ export default function Home() {
     setView('timer');
     setCurrentLoop(0);
   }
+
+  React.useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(registration => {
+          console.log('Service Worker registered:', registration);
+        })
+        .catch((error) =>
+          console.error('Service Worker registration failed:', error)
+        );
+    }
+  }, []);
 
   return (
 

@@ -68,6 +68,15 @@ export default function Home() {
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
+
+    // Service Workerにタイマー開始を通知
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'START_TIMER',
+        duration: pomodoro.duration,
+        mode: pomodoro.mode,
+      });
+    }
   };
 
   const stopPomodoro = () => {
@@ -127,50 +136,64 @@ export default function Home() {
   }
 
   // Service Workerからのメッセージ受信
+  const settingsRef = React.useRef(settings);
+  const currentLoopRef = React.useRef(currentLoop);
+
+  React.useEffect(() => {
+    settingsRef.current = settings;
+    currentLoopRef.current = currentLoop;
+  }, [settings, currentLoop]);
+
   React.useEffect(() => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('message', (event) => {
+      const handleMessage = (event: MessageEvent) => {
         if (event.data.type === 'TIMER_COMPLETED') {
           const completedMode = event.data.mode;
 
           //次のモードに切り替え
           if (completedMode === 'work') {
-            setPomodoro({ duration: settings.breakDuration * 60, isRunning: true, mode: 'break' });
+            setPomodoro({
+              duration: settingsRef.current.breakDuration * 60,
+              isRunning: true,
+              mode: 'break'
+            });
 
-            if(navigator.serviceWorker.controller) {
-              navigator.serviceWorker.controller.postMessage({
-                type: 'START_TIMER',
-                duration: settings.breakDuration * 60,
-                mode: 'break',
-              });
-            }
           } else {
-            const nextLoop = currentLoop + 1;
+            const nextLoop = currentLoopRef.current + 1;
             setCurrentLoop(nextLoop);
 
-            if (nextLoop >= settings.loop) {
+            if (nextLoop >= settingsRef.current.loop) {
               resetPomodoro();
               if (navigator.serviceWorker.controller) {
                 navigator.serviceWorker.controller.postMessage({
                   type: 'END_TIMER',
                 });
               }
-        } else {
-              setPomodoro({ duration: settings.workDuration * 60, isRunning: true, mode: 'work' });
+            } else {
+              setPomodoro({
+                duration: settingsRef.current.workDuration * 60,
+                isRunning: true,
+                mode: 'work'
+              });
 
-              if(navigator.serviceWorker.controller) {
+              if (navigator.serviceWorker.controller) {
                 navigator.serviceWorker.controller.postMessage({
                   type: 'START_TIMER',
-                  duration: settings.workDuration * 60,
+                  duration: settingsRef.current.workDuration * 60,
                   mode: 'work',
                 });
               }
             }
           }
         }
-      });
+      };
+
+      navigator.serviceWorker.addEventListener('message', handleMessage);
+      return () => {
+        navigator.serviceWorker.removeEventListener('message', handleMessage);
+      };
     }
-  }, [settings, currentLoop]);
+  }, []);
 
   React.useEffect(() => {
     if (pomodoro.duration === 0) {
@@ -282,8 +305,9 @@ export default function Home() {
       isRunning: false,
       mode: 'work',
     });
-    setView('timer');
+
     setCurrentLoop(0);
+    setView('timer');
   }
 
   React.useEffect(() => {

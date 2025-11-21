@@ -23,7 +23,7 @@ self.addEventListener("message", (event) => {
 
     if (currentTimerId) {
       clearTimeout(currentTimerId);
-      console.log("Precious timer cleared.");
+      console.log("Previous timer cleared.");
     }
 
     // 新しいタイマーをセット

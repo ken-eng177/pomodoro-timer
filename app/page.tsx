@@ -22,7 +22,6 @@ type Todo = {
 };
 
 export default function Home() {
-  const audioContextRef = React.useRef<AudioContext | null>(null);
   const [pomodoro, setPomodoro] = useState<Pomodoro>({
     duration: 25 * 60,
     isRunning: false,
@@ -41,8 +40,6 @@ export default function Home() {
   }
 
   const [showTodoModal, setShowTodoModal] = useState(false);
-
-  const isIOS = typeof window !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
   // OSのダークモード設定を初期値として設定
   React.useEffect(() => {
@@ -65,9 +62,6 @@ export default function Home() {
     }
 
     setPomodoro({ ...pomodoro, isRunning: true });
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
 
     // Service Workerにタイマー開始を通知
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
@@ -196,43 +190,6 @@ export default function Home() {
   }, []);
 
   React.useEffect(() => {
-    if (pomodoro.duration === 0) {
-      playSound();
-      if (pomodoro.mode === 'work') {
-        setPomodoro({ duration: settings.breakDuration * 60, isRunning: true, mode: 'break' })
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-          navigator.serviceWorker.controller.postMessage({
-            type: 'START_TIMER',
-            duration: pomodoro.duration,
-            mode: pomodoro.mode,
-          });
-        }
-      } else {
-        const nextLoop = currentLoop + 1;
-        setCurrentLoop(nextLoop);
-        if (nextLoop >= settings.loop) {
-          resetPomodoro();
-          if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-            navigator.serviceWorker.controller.postMessage({
-              type: 'END_TIMER',
-            });
-          }
-          return;
-        }
-        setPomodoro({ duration: settings.workDuration * 60, isRunning: true, mode: 'work' })
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-          navigator.serviceWorker.controller.postMessage({
-            type: 'START_TIMER',
-            duration: pomodoro.duration,
-            mode: pomodoro.mode,
-          });
-        }
-      }
-
-    }
-  }, [pomodoro.duration]);
-
-  React.useEffect(() => {
     if (!pomodoro.isRunning) return;
 
     const startTime = Date.now();
@@ -264,38 +221,6 @@ export default function Home() {
     }
     console.log('Current classes:', document.documentElement.className);
   }, [theme]);
-
-  const playSound = async () => {
-    console.log('playSound called, isIOS:', isIOS);
-    console.log('audioContextRef.current:', audioContextRef.current);
-    try {
-      const audioContext = audioContextRef.current;
-      if (!audioContext) {
-        console.error("AudioContext is not initialized.");
-        return;
-      }
-      console.log('audioContext.state:', audioContext.state);
-      if (audioContext.state !== 'running') {
-        await audioContext.resume();
-      }
-
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-
-      oscillator.type = 'sine';
-      oscillator.frequency.value = 800;
-      gainNode.gain.value = 0.3;
-
-      const now = audioContext.currentTime;
-      oscillator.start(now);
-      oscillator.stop(now + 0.5);
-    } catch (error) {
-      console.error("Error playing sound:", error);
-    }
-  };
 
   const totalDuration = pomodoro.mode === 'work' ? settings.workDuration * 60 : settings.breakDuration * 60;
 

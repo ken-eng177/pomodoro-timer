@@ -61,123 +61,84 @@ export default function Home() {
       Notification.requestPermission();
     }
 
-    setPomodoro({ ...pomodoro, isRunning: true });
-
     // Service Workerにタイマー開始を通知
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({
         type: 'START_TIMER',
-        duration: pomodoro.duration,
-        mode: pomodoro.mode,
+        data: {
+          duration: pomodoro.duration,
+          mode: pomodoro.mode,
+        }
       });
     }
   };
 
   const stopPomodoro = () => {
-    setPomodoro({ ...pomodoro, isRunning: false });
-
-    // Service Workerのタイマーも停止
+    // Service Workerのタイマーを一時停止
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({
-        type: 'STOP_TIMER',
-      });
+      if (pomodoro.isRunning) {
+        // 一時停止
+        navigator.serviceWorker.controller.postMessage({
+          type: 'PAUSE_TIMER',
+        });
+      } else {
+        // 再開
+        navigator.serviceWorker.controller.postMessage({
+          type: 'RESUME_TIMER',
+        });
+      }
     }
   };
 
   const resetPomodoro = () => {
+    setView('setup');
+
+    // Service Workerのタイマーをリセット
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({
-        type: 'STOP_TIMER',
+        type: 'RESET_TIMER',
       });
     }
-    setView('setup');
   };
 
   const onStepForward = () => {
-    if (pomodoro.mode === 'work') {
-      setPomodoro({ duration: settings.breakDuration * 60, isRunning: true, mode: 'break' })
-      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-          type: 'START_TIMER',
-          duration: pomodoro.duration,
-          mode: pomodoro.mode,
-        });
-      }
-    } else {
-      const nextLoop = currentLoop + 1;
-      setCurrentLoop(nextLoop);
-      if (nextLoop >= settings.loop) {
-        resetPomodoro();
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-          navigator.serviceWorker.controller.postMessage({
-            type: 'START_TIMER',
-            duration: pomodoro.duration,
-            mode: pomodoro.mode,
-          });
-        }
-        return;
-      }
-      setPomodoro({ duration: settings.workDuration * 60, isRunning: true, mode: 'work' })
-      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-          type: 'START_TIMER',
-          duration: pomodoro.duration,
-          mode: pomodoro.mode,
-        });
-      }
+    // Service Workerに手動スキップを依頼（現在のタイマーを完了扱いにする）
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'SKIP_TIMER',
+      });
     }
-
   }
 
   // Service Workerからのメッセージ受信
-  const settingsRef = React.useRef(settings);
-  const currentLoopRef = React.useRef(currentLoop);
-
-  React.useEffect(() => {
-    settingsRef.current = settings;
-    currentLoopRef.current = currentLoop;
-  }, [settings, currentLoop]);
-
   React.useEffect(() => {
     if ('serviceWorker' in navigator) {
       const handleMessage = (event: MessageEvent) => {
-        if (event.data.type === 'TIMER_COMPLETED') {
-          const completedMode = event.data.mode;
+        if (event.data.type === 'TIMER_STATE') {
+          const state = event.data.state;
+          console.log('Received TIMER_STATE from SW:', state);
 
-          //次のモードに切り替え
-          if (completedMode === 'work') {
-            setPomodoro({
-              duration: settingsRef.current.breakDuration * 60,
-              isRunning: true,
-              mode: 'break'
-            });
+          // Service Workerからの状態を反映
+          setPomodoro((prev) => ({
+            ...prev,
+            isRunning: state.isRunning,
+            mode: state.mode,
+            // 全セッション終了時はdurationもリセット
+            duration: state.totalDuration === 0 ? 0 : prev.duration,
+          }));
+          setCurrentLoop(state.currentLoop);
 
-          } else {
-            const nextLoop = currentLoopRef.current + 1;
-            setCurrentLoop(nextLoop);
+          // タイマー状態を保存（開始時刻ベースの計算用）
+          setSwTimerState({
+            startTime: state.startTime,
+            totalDuration: state.totalDuration,
+            isRunning: state.isRunning,
+          });
 
-            if (nextLoop >= settingsRef.current.loop) {
-              resetPomodoro();
-              if (navigator.serviceWorker.controller) {
-                navigator.serviceWorker.controller.postMessage({
-                  type: 'END_TIMER',
-                });
-              }
-            } else {
-              setPomodoro({
-                duration: settingsRef.current.workDuration * 60,
-                isRunning: true,
-                mode: 'work'
-              });
-
-              if (navigator.serviceWorker.controller) {
-                navigator.serviceWorker.controller.postMessage({
-                  type: 'START_TIMER',
-                  duration: settingsRef.current.workDuration * 60,
-                  mode: 'work',
-                });
-              }
-            }
+          // 終了した場合はセットアップ画面に戻る
+          if (!state.isRunning && state.currentLoop === 0 && state.totalDuration === 0) {
+            console.log('All sessions completed, returning to setup');
+            setView('setup');
           }
         }
       };
@@ -189,24 +150,33 @@ export default function Home() {
     }
   }, []);
 
-  React.useEffect(() => {
-    if (!pomodoro.isRunning) return;
+  // Service Workerからタイマー状態を受け取り、UI側で残り時間を計算
+  const [swTimerState, setSwTimerState] = React.useState<{
+    startTime: number | null;
+    totalDuration: number;
+    isRunning: boolean;
+  }>({
+    startTime: null,
+    totalDuration: 0,
+    isRunning: false,
+  });
 
-    const startTime = Date.now();
-    const initialDuration = pomodoro.duration;
+  React.useEffect(() => {
+    if (!pomodoro.isRunning || swTimerState.startTime === null) return;
 
     const timer = setInterval(() => {
-      const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
-      const newDuration = Math.max(0, initialDuration - elapsedSeconds);
+      const elapsedSeconds = Math.floor((Date.now() - swTimerState.startTime!) / 1000);
+      const newDuration = Math.max(0, swTimerState.totalDuration - elapsedSeconds);
 
       setPomodoro((prev) => ({ ...prev, duration: newDuration }));
+
       if (newDuration === 0) {
         clearInterval(timer);
       }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [pomodoro.isRunning, pomodoro.mode]);
+  }, [pomodoro.isRunning, swTimerState.startTime, swTimerState.totalDuration]);
 
   React.useEffect(() => {
     console.log('Theme changed to:', theme);
@@ -233,6 +203,20 @@ export default function Home() {
 
     setCurrentLoop(0);
     setView('timer');
+
+    // Service Workerに設定を送信
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'INIT_SETTINGS',
+        data: {
+          settings: {
+            loop: settings.loop,
+            workDuration: settings.workDuration,
+            breakDuration: settings.breakDuration,
+          }
+        }
+      });
+    }
   }
 
   React.useEffect(() => {
